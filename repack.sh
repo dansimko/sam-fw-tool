@@ -40,6 +40,21 @@ extract_zip() {
     unzip -qq "${1}" -d "${dir}"
 }
 
+md5verify() {
+    archivename="${entry##*/}"
+    archivesize="$(wc -c<${archivename})"
+    tarname="${archivename%.md5}"
+    md5size="$((${#tarname}+35))"
+    dd if="${archivename}" of=archivemd5sum bs=1 skip="$((${archivesize}-${md5size}))" 2>/dev/null
+    sed -i.bak s/${tarname}/-/g archivemd5sum
+    if [ "$(dd if="${archivename}" bs="$((${archivesize}-${md5size}))" count=1 2>/dev/null | md5sum -c archivemd5sum && rm archivemd5sum archivemd5sum.bak)" == "-: OK" ]; then
+        return 0
+    else
+        echo "Checksum mismatch for $archivename!"
+        return 1
+    fi
+}
+
 decompress_data() {
     [ -d "${entry%.tar.md5}" ] || mkdir "${entry%.tar.md5}"
     tar_result="$(tar -xvf ${entry} -C ${entry%.tar.md5})"
@@ -80,6 +95,8 @@ fi
 
 fw_check
 
+[ -d "${out}" ] || mkdir "${out}"
+
 for entry in ${dir}/*.tar.md5; do
-    decompress_data
+    md5verify && decompress_data
 done
