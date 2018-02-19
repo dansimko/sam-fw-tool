@@ -6,6 +6,7 @@ command -v lz4 >/dev/null 2>&1 || { echo "liblz4-tool package is reuqired. Abort
 command -v md5sum >/dev/null 2>&1 || { echo "md5sum package is reuqired. Aborting." >&2; exit 1; }
 
 dir=`pwd`
+out="${dir}/firmware"
 file=""
 
 usage() {
@@ -14,18 +15,19 @@ usage() {
 Option					Meaning
  -h					Show this help text and exit
  -d					Set working directory
- -f					Input is ZIP archive containing FW"
+ -f					Input is ZIP archive containing FW
+ -o					Set output directory"
     exit
 }
 
 fw_check() {
-count=`ls -1 *.tar.md5 2>/dev/null | wc -l`
-if [ $count != 0 ]; then
-    echo "Found potential Odin archive(s)"
-else
-    echo "Odin firmware not found"
-    exit 1
-fi
+    count=`ls -1 *.tar.md5 2>/dev/null | wc -l`
+    if [ $count != 0 ]; then
+        echo "Found potential Odin archive(s)"
+    else
+        echo "Odin firmware not found"
+        exit 1
+    fi
 }
 
 extract_zip() {
@@ -39,7 +41,7 @@ extract_zip() {
 }
 
 decompress_data() {
-[ -d "${entry%.tar.md5}" ] || mkdir "${entry%.tar.md5}"
+    [ -d "${entry%.tar.md5}" ] || mkdir "${entry%.tar.md5}"
     tar_result="$(tar -xvf ${entry} -C ${entry%.tar.md5})"
     tar_result="${tar_result//$'\n'/ }"
     tar_result="${tar_result//.lz4/}"
@@ -47,19 +49,23 @@ decompress_data() {
     archivename="${entry##*/}"
     tar -H ustar --directory="${entry%.tar.md5}" -cf "${entry%.tar.md5}/${archivename%.md5}" ${tar_result}
     $(cd "${entry%.tar.md5}" && md5sum -t "${archivename%.md5}" >> "${archivename%.md5}")
-    mv "${entry%.tar.md5}/${archivename%.md5}" "${entry%.tar.md5}/${archivename}"
+    mv "${entry%.tar.md5}/${archivename%.md5}" "${out}/${archivename}"
+    rm -r ${entry%.tar.md5}
 }
 
-while getopts ":hd:f:" o; do
+while getopts ":hd:f:o:" o; do
     case "${o}" in
         h)
             usage
             ;;
         d)
-            dir=${OPTARG}
+            dir="${OPTARG}"
             ;;
         f)
-            file=${OPTARG}
+            file="${OPTARG}"
+            ;;
+        o)
+            out="${OPTARG}"
             ;;
         *)
             usage

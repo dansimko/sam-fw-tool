@@ -14,6 +14,10 @@ or you can point the script to zip archive of the firmware:
 
 	# ./repack.sh -f path/to/your/zip/firmware
 
-The zip archive will be extracted to current working directory. Fortunately, you can use bot flags at the same time:
+The zip archive will be extracted to current working directory. Fortunately, you can use both flags at the same time:
 
 	# ./repack.sh -d path/to/your/working/dir -f path/to/your/zip/firmware
+
+By default, the resulting files will be stored in `pwd`/firmware, this can be overriden using -o flag:
+
+	# ./repack.sh -o output/path
