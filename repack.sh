@@ -60,7 +60,7 @@ decompress_data() {
     tar_result="$(tar -xvf ${entry} -C ${entry%.tar.md5})"
     tar_result="${tar_result//$'\n'/ }"
     tar_result="${tar_result//.lz4/}"
-    lz4 -md "${entry%.tar.md5}/*.lz4"
+    lz4 -md ${entry%.tar.md5}/*.lz4
     archivename="${entry##*/}"
     tar -H ustar --directory="${entry%.tar.md5}" -cf "${entry%.tar.md5}/${archivename%.md5}" ${tar_result}
     $(cd "${entry%.tar.md5}" && md5sum -t "${archivename%.md5}" >> "${archivename%.md5}")
